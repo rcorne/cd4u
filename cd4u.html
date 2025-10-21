@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagnóstico VIH - CD4 y Carga Viral</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f1f8f6;
+      color: #222;
+      text-align: center;
+      padding: 40px;
+    }
+    h1 {
+      color: #00796b;
+      margin-bottom: 10px;
+    }
+    input, select {
+      padding: 10px;
+      margin: 10px;
+      width: 220px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    button {
+      padding: 12px 25px;
+      background: #00796b;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #004d40;
+    }
+    #resultado {
+      margin-top: 30px;
+      padding: 20px;
+      font-size: 18px;
+      border-radius: 8px;
+      background: #e0f2f1;
+      display: inline-block;
+      max-width: 450px;
+    }
+    .barra {
+      margin: 25px auto;
+      height: 25px;
+      width: 80%;
+      background: #ddd;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    .progreso {
+      height: 100%;
+      width: 0%;
+      border-radius: 20px;
+      transition: width 1s ease-in-out;
+    }
+    #calendarButton {
+      display: none;
+      margin-top: 15px;
+      background: #4285F4;
+    }
+    #calendarButton:hover {
+      background: #3367D6;
+    }
+  </style>
+</head>
+<body>
+  <h1>Diagnóstico VIH</h1>
+  <p>Ingresa tus valores de laboratorio para estimar la etapa del VIH:</p>
+
+  <input type="number" id="cd4" placeholder="CD4 (células/mm³)">
+  <br>
+  <input type="number" id="cargaViral" placeholder="Carga viral (copias/ml)">
+  <br>
+  <button onclick="diagnosticar()">Diagnóstico</button>
+
+  <div class="barra">
+    <div id="progreso" class="progreso"></div>
+  </div>
+
+  <div id="resultado"></div>
+  <br>
+
+  <div id="recordatorio" style="display:none;">
+    <label for="meses">📅 Elegir recordatorio:</label>
+    <select id="meses">
+      <option value="3">En 3 meses</option>
+      <option value="6">En 6 meses</option>
+    </select>
+    <br>
+    <button id="calendarButton" onclick="agregarAGoogleCalendar()">Guardar en Google Calendar</button>
+  </div>
+
+  <script>
+    let ultimoResultado = "";
+
+    function diagnosticar() {
+      const cd4 = parseInt(document.getElementById('cd4').value);
+      const carga = parseInt(document.getElementById('cargaViral').value);
+      const resultado = document.getElementById('resultado');
+      const barra = document.getElementById('progreso');
+      const recordatorio = document.getElementById('recordatorio');
+      let diagnostico = "";
+      let color = "";
+      let porcentaje = 0;
+
+      if (isNaN(cd4) || isNaN(carga)) {
+        resultado.innerHTML = "⚠️ Por favor, ingresa ambos valores numéricos.";
+        barra.style.width = "0%";
+        barra.style.background = "#ddd";
+        recordatorio.style.display = "none";
+        return;
+      }
+
+      // Evaluación de CD4
+      if (cd4 > 500) {
+        diagnostico += "🟢 Sistema inmunológico en buen estado (fase inicial).<br>";
+        porcentaje = 100;
+        color = "#4caf50";
+      } else if (cd4 >= 350) {
+        diagnostico += "🟡 Ligera afectación del sistema inmune (fase estable).<br>";
+        porcentaje = 75;
+        color = "#ffc107";
+      } else if (cd4 >= 200) {
+        diagnostico += "🟠 Sistema inmune debilitado (fase intermedia).<br>";
+        porcentaje = 50;
+        color = "#ff9800";
+      } else {
+        diagnostico += "🔴 Sistema inmune muy afectado (etapa SIDA).<br>";
+        porcentaje = 25;
+        color = "#f44336";
+      }
+
+      // Evaluación de carga viral
+      if (carga < 10000) {
+        diagnostico += "Tu carga viral es baja: buen pronóstico inicial.";
+      } else if (carga < 100000) {
+        diagnostico += "Tu carga viral es moderada: el virus está activo, pero controlable.";
+      } else {
+        diagnostico += "Tu carga viral es alta: infección reciente o sin tratamiento.";
+      }
+
+      resultado.innerHTML = diagnostico;
+      barra.style.width = porcentaje + "%";
+      barra.style.background = color;
+
+      ultimoResultado = `CD4: ${cd4} | Carga viral: ${carga} copias/ml | ${diagnostico.replace(/<br>/g, " ")}`;
+      recordatorio.style.display = "block";
+    }
+
+    function agregarAGoogleCalendar() {
+      const meses = parseInt(document.getElementById('meses').value);
+      const hoy = new Date();
+      const futuro = new Date(hoy);
+      futuro.setMonth(hoy.getMonth() + meses);
+
+      const inicio = futuro.toISOString().split('T')[0].replace(/-/g, '');
+      const fin = inicio;
+
+      const titulo = encodeURIComponent(`Control VIH (${meses} meses)`);
+      const detalles = encodeURIComponent(`Recordatorio de control y análisis.\n\nÚltimos resultados:\n${ultimoResultado}`);
+      const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${titulo}&dates=${inicio}/${fin}&details=${detalles}`;
+
+      window.open(url, '_blank');
+    }
+  </script>
+</body>
+</html>
